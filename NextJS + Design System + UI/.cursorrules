@@ -1,0 +1,422 @@
+# 🎯 Design System Automation Rules for Cursor
+
+## Core Design System Principles
+
+You are an expert in automated design systems with deep knowledge of:
+- 8px grid systems and mathematical spacing
+- UX best practices and accessibility (WCAG AA/AAA)
+- React hooks and TypeScript patterns
+- Tailwind CSS utility-first approach
+- Design token systems and semantic naming
+
+## 8px Grid System Rules
+
+### ALWAYS enforce 8px grid compliance:
+- Use multiples of 8px: 8px, 16px, 24px, 32px, 48px, 64px, 96px
+- Never suggest: 5px, 7px, 9px, 10px, 15px, 22px, 30px, 35px
+- Replace non-grid values with nearest 8px multiple
+- Prefer semantic spacing over hardcoded values
+
+### Spacing Pattern Recognition:
+```typescript
+// ✅ GOOD - Grid compliant
+spacing[2]  // 8px  - Base unit
+spacing[4]  // 16px - Standard spacing  
+spacing[6]  // 24px - Large spacing
+spacing[8]  // 32px - Section spacing
+
+// ❌ BAD - Non-grid values
+'10px', '15px', '22px', '30px'
+```
+
+## Component Development Rules
+
+### 1. Always use design system hooks
+When creating or modifying React components:
+
+```typescript
+// ✅ REQUIRED pattern for all components
+import { useDesignSystem } from '@/lib/design-system/use-design-system';
+import { semanticSpacing } from '@/lib/design-system/spacing';
+
+const Component = () => {
+  const { elementRef, isValid } = useDesignSystem('ComponentName');
+  
+  return (
+    <div 
+      ref={elementRef}
+      style={{ padding: semanticSpacing.componentPadding.normal }}
+    >
+      Content
+    </div>
+  );
+};
+```
+
+### 2. Specialized hooks for common components
+- For buttons: `useButtonDesignSystem({ size, variant })`
+- For cards: `usePropertyCardDesignSystem()` 
+- For forms: `useDesignSystem('FormComponent')`
+- For chat: `useChatDesignSystem()`
+
+### 3. Touch target enforcement
+All interactive elements MUST meet accessibility requirements:
+
+```typescript
+// ✅ REQUIRED for buttons
+className="h-touch-md"        // 48px (Material Design)
+className="h-touch-sm"        // 44px (iOS minimum)
+className="h-touch-lg"        // 56px (Large actions)
+className="h-touch-xl"        // 64px (Hero CTAs)
+
+// ❌ NEVER use for interactive elements
+className="h-8"               // 32px - Too small
+className="h-6"               // 24px - Too small
+```
+
+## Semantic Spacing Patterns
+
+### ALWAYS prefer semantic spacing over hardcoded values:
+
+```typescript
+// ✅ GOOD - Semantic spacing
+style={{
+  padding: semanticSpacing.componentPadding.normal,    // 16px
+  gap: semanticSpacing.layout.elementGap,              // 8px
+  margin: semanticSpacing.layout.componentGap,         // 16px
+}}
+
+// ❌ BAD - Hardcoded values
+style={{ padding: '15px', gap: '10px', margin: '20px' }}
+```
+
+### Semantic spacing categories:
+- `componentPadding`: tight(8px), normal(16px), loose(24px), spacious(32px)
+- `layout`: microGap(4px), elementGap(8px), componentGap(16px), sectionGap(32px)
+- `propertyCard`: padding(16px), gap(12px), margin(16px), imageMargin(8px)
+- `chat`: messagePadding(12px), messageGap(8px), inputPadding(16px), sidebarPadding(24px)
+
+## Tailwind CSS Patterns
+
+### Grid-aligned utility classes:
+```css
+/* ✅ GOOD - 8px grid aligned */
+p-2     /* 8px */
+p-4     /* 16px */
+p-6     /* 24px */
+p-8     /* 32px */
+p-12    /* 48px */
+
+gap-2   /* 8px */
+gap-4   /* 16px */
+gap-6   /* 24px */
+
+m-4     /* 16px */
+m-6     /* 24px */
+m-8     /* 32px */
+
+/* ❌ BAD - Non-grid values */
+p-3     /* 12px - Use p-4 (16px) instead */
+p-5     /* 20px - Use p-6 (24px) instead */
+gap-3   /* 12px - Use gap-4 (16px) instead */
+```
+
+### Touch target utilities:
+```css
+h-touch-sm    /* 44px - iOS minimum */
+h-touch-md    /* 48px - Material Design recommended */
+h-touch-lg    /* 56px - Large buttons */
+h-touch-xl    /* 64px - Hero CTAs */
+```
+
+### Content width constraints:
+```css
+max-w-prose      /* 65ch - Optimal reading */
+max-w-prose-sm   /* 45ch - Minimum readable */
+max-w-prose-lg   /* 75ch - Maximum readable */
+max-w-mobile     /* 320px - Mobile breakpoint */
+max-w-tablet     /* 768px - Tablet breakpoint */
+max-w-desktop    /* 1280px - Desktop max-width */
+```
+
+## Code Generation Rules
+
+### When generating new components:
+
+1. **Always include design system hook**:
+```typescript
+const { elementRef, isValid, validationResult } = useDesignSystem('ComponentName');
+```
+
+2. **Always attach elementRef**:
+```typescript
+return <div ref={elementRef}>...</div>;
+```
+
+3. **Use semantic spacing**:
+```typescript
+style={{ 
+  padding: semanticSpacing.componentPadding.normal,
+  gap: semanticSpacing.layout.elementGap 
+}}
+```
+
+4. **Ensure touch targets for interactive elements**:
+```typescript
+// Buttons
+<button className="h-touch-md px-4 py-2">
+
+// Links that look like buttons  
+<a className="h-touch-md inline-flex items-center px-4 py-2">
+
+// Icon buttons
+<button className="h-touch-md w-touch-md">
+```
+
+5. **Add proper TypeScript types**:
+```typescript
+interface ComponentProps {
+  children: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'primary' | 'secondary' | 'ghost';
+  className?: string;
+}
+```
+
+## Validation and Error Detection
+
+### Automatically detect and fix common issues:
+
+1. **Non-grid spacing values**:
+```typescript
+// Detect: padding: '15px'
+// Suggest: padding: spacing[4] // 16px
+// Or: style={{ padding: semanticSpacing.componentPadding.normal }}
+```
+
+2. **Small touch targets**:
+```typescript
+// Detect: className="h-8" on buttons
+// Suggest: className="h-touch-md" // 48px
+```
+
+3. **Missing design system hooks**:
+```typescript
+// Detect: Component without useDesignSystem
+// Suggest: Add const { elementRef } = useDesignSystem('ComponentName');
+```
+
+4. **Hardcoded spacing in Tailwind**:
+```typescript
+// Detect: className="p-3 m-5"
+// Suggest: className="p-4 m-6" // Grid-aligned
+```
+
+## Development Tools Integration
+
+### Always suggest development tools:
+
+```typescript
+// Add to main layout or page in development
+import { useDesignSystemDevTools } from '@/lib/design-system/use-design-system';
+
+const DevTools = () => {
+  const { toggleGrid, validateAllComponents } = useDesignSystemDevTools();
+  
+  if (process.env.NODE_ENV !== 'development') return null;
+  
+  return (
+    <div className="fixed bottom-4 right-4 flex gap-2 z-maximum">
+      <button onClick={toggleGrid}>Toggle Grid (Cmd+G)</button>
+      <button onClick={validateAllComponents}>Validate All</button>
+    </div>
+  );
+};
+```
+
+## Error Prevention Patterns
+
+### Common issues to prevent:
+
+1. **Missing refs**: Always attach elementRef to components using design system
+2. **Wrong spacing**: Never use non-8px multiples
+3. **Small touch targets**: All interactive elements ≥44px
+4. **Poor contrast**: Ensure 4.5:1 minimum contrast ratio
+5. **Missing semantic HTML**: Use proper HTML elements (button, not div with onClick)
+
+### Code review checklist:
+- [ ] Components use design system hooks
+- [ ] All spacing follows 8px grid
+- [ ] Touch targets meet 44px minimum
+- [ ] Semantic spacing used over hardcoded
+- [ ] No validation errors in console
+- [ ] Proper TypeScript types
+- [ ] Accessibility attributes present
+
+## File Organization Patterns
+
+### Design system file structure:
+```
+lib/design-system/
+├── spacing.ts              # 8px grid & semantic spacing
+├── enforcement.ts          # Validation & auto-fix
+├── ux-guidelines.ts        # UX best practices
+├── use-design-system.ts    # React hooks
+├── variants.ts             # Component variants
+└── tokens.ts              # Design tokens
+```
+
+### Import patterns:
+```typescript
+// Core design system
+import { useDesignSystem } from '@/lib/design-system/use-design-system';
+import { spacing, semanticSpacing } from '@/lib/design-system/spacing';
+import { touchTargets } from '@/lib/design-system/spacing';
+
+// Specialized hooks
+import { 
+  useButtonDesignSystem,
+  usePropertyCardDesignSystem,
+  useChatDesignSystem,
+  useDesignSystemDevTools 
+} from '@/lib/design-system/use-design-system';
+
+// Validation utilities
+import { validators, autoFix } from '@/lib/design-system/enforcement';
+import type { ValidationResult } from '@/lib/design-system/enforcement';
+```
+
+## Real Estate Specific Patterns
+
+### Property card components:
+```typescript
+const PropertyCard = ({ property }) => {
+  const { cardRef, spacing } = usePropertyCardDesignSystem();
+  
+  return (
+    <div
+      ref={cardRef}
+      style={{
+        padding: spacing.padding,      // 16px
+        gap: spacing.gap,             // 12px
+        margin: spacing.margin,       // 16px
+      }}
+    >
+      <img style={{ marginBottom: spacing.imageMargin }} />
+      <div className="space-y-2"> {/* 8px vertical spacing */}
+        <h3>{property.title}</h3>
+        <p className="text-primary-600">{property.price}</p>
+      </div>
+    </div>
+  );
+};
+```
+
+### Chat interface patterns:
+```typescript
+const ChatInterface = () => {
+  const { chatRef, spacing } = useChatDesignSystem();
+  
+  return (
+    <div 
+      ref={chatRef}
+      style={{ padding: spacing.sidebarPadding }} // 24px
+    >
+      <div style={{ gap: spacing.messageGap }}> {/* 8px */}
+        {messages.map(message => (
+          <div style={{ padding: spacing.messagePadding }}>
+            {message.text}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+## Performance Considerations
+
+### Development vs Production:
+- Validation only runs in development (NODE_ENV === 'development')
+- Grid overlays only in development
+- Console logging only in development
+- Production builds have zero overhead
+
+### Optimization patterns:
+```typescript
+// Memoize validation results
+const validationResult = useMemo(() => 
+  validateComponent(props), 
+  [props.spacing, props.size]
+);
+
+// Debounce validation for complex components
+const debouncedValidation = useDebounce(validationFn, 100);
+```
+
+## Accessibility Rules
+
+### WCAG AA Compliance (automatic validation):
+- Touch targets ≥44px
+- Color contrast ≥4.5:1 for normal text
+- Color contrast ≥3:1 for large text (18px+)
+- Focus indicators visible
+- Semantic HTML structure
+- Keyboard navigation support
+
+### Accessibility patterns:
+```typescript
+// Proper button with focus styles
+<button 
+  className="h-touch-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+  aria-label="Save property"
+>
+  Save
+</button>
+
+// Proper form with labels
+<label htmlFor="search">Search Properties</label>
+<input 
+  id="search"
+  className="h-touch-md"
+  aria-describedby="search-help"
+/>
+<p id="search-help">Enter city or postal code</p>
+```
+
+## Debug and Troubleshooting
+
+### Enable debug mode:
+```typescript
+// In browser console or component
+window.__DESIGN_SYSTEM_DEBUG__ = true;
+
+// Check validation status
+const { validationResult, isValid } = useDesignSystem('Component');
+console.log('Validation:', validationResult, 'Valid:', isValid);
+```
+
+### Common debug patterns:
+- Grid overlay: `Ctrl/Cmd + G`
+- Validation report: `validateAllComponents()`
+- Component validation: Check `data-design-system-valid` attribute
+- Console logs: Watch for 🔥✅ ⚠️❌ prefixed messages
+
+## Migration Assistance
+
+### When refactoring existing components:
+
+1. **Add design system hook**: `const { elementRef } = useDesignSystem('ComponentName');`
+2. **Replace hardcoded spacing**: `p-3` → `p-4`, `15px` → `16px`
+3. **Fix touch targets**: `h-8` → `h-touch-md`
+4. **Use semantic spacing**: `padding: '16px'` → `padding: semanticSpacing.componentPadding.normal`
+5. **Test validation**: Check console for errors/warnings
+
+### Migration priority:
+1. Buttons (high impact, easy fix)
+2. Forms (user interaction)
+3. Cards (visual consistency)
+4. Layout (spacing between sections)
+5. Typography (readability)
+
+Remember: The design system should feel invisible to developers while ensuring perfect UX consistency! 
